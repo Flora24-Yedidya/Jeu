@@ -73,34 +73,24 @@
             }
           }
         }
-
+        
+        stage('Test projet'){
+          steps {
+            container('maven'){
+             sh "mvn test"
+            }
+          }
+        }
+        
         stage('Scripting') {
           steps {
               sh 'chmod a+x deploy_script.sh'
               sh './deploy_script.sh'
           }
-        }
-
-        stage('Deploy') {
-          steps {
-            container('kubectl') {
-              sh "kubectl apply -f deployment.yml -n ${DEPLOYMENT_ENV}"
-              sh "kubectl get svc ${PROJECT_NAME} -n ${DEPLOYMENT_ENV}"
-            }
+          post {
+                always {
+                    junit 'target/surefire-reports/*.xml' 
+                }
           }
         }
-     
-
-      }
-
-      post {
-          always {
-              echo 'I will always say Hello again!'
-              
-              emailext body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info Check <b>Console Output</b> at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>",
-              recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
-              subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
-              
-          }
-      }
   } 
